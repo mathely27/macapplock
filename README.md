@@ -42,3 +42,4 @@ Whenever you open a protected app, AppLocker will intercept it and present a nat
 ## 📜 License
 MIT License. Feel free to fork and improve!
 # macapplock
+# macapplock
