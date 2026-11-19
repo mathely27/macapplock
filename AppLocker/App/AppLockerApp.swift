@@ -80,9 +80,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func closeDashboard() {
         dashboard?.orderOut(nil)
-        NSApp.setActivationPolicy(.accessory)
+        restoreBackgroundModeIfNeeded()
         logger.notice("Dashboard closed visible=\(self.dashboard?.isVisible ?? false) monitoring=\(AppLockManager.shared.isMonitoring)")
         // Do not hide NSApp: its password/lock panels must still be able to appear.
+    }
+
+    func restoreBackgroundModeIfNeeded() {
+        // The lock needs a foreground-capable app even with its dashboard closed.
+        if dashboard?.isVisible != true && !AppLockManager.shared.isPresentingLock {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {

@@ -44,6 +44,8 @@ final class AppLockManager: ObservableObject {
         startMonitoring()
     }
 
+    var isPresentingLock: Bool { pendingApp != nil }
+
     private func identity(_ app: NSRunningApplication) -> ProcessIdentity {
         ProcessIdentity(pid: app.processIdentifier, launchedAt: app.launchDate)
     }
@@ -247,7 +249,17 @@ final class AppLockManager: ObservableObject {
         }
         guard shouldIntercept else { return }
         // A pending prompt never gives any other app a free pass.
-        if pendingApp != nil || authenticationID != nil {
+        if let pending = pendingApp {
+            app.hide()
+            if identity(pending) == process || authenticationID != nil {
+                bringLockToFront()
+                return
+            }
+            // A click on another protected app switches the visible lock target;
+            // neither process is authorized by this change.
+            guard explicitOpen else { return }
+            cancelPendingAuthentication()
+        } else if authenticationID != nil {
             app.hide()
             return
         }
@@ -263,7 +275,7 @@ final class AppLockManager: ObservableObject {
         pendingApp = app
         activationDeadline = nil
         app.hide()
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.setActivationPolicy(.regular)
         showShield(for: app.localizedName ?? "this app", unlock: { [weak self, weak app] in
             guard let self, let app, self.session.requestID == request else { return }
             self.unlock(app, request: request, process: process)
@@ -314,9 +326,13 @@ final class AppLockManager: ObservableObject {
                             self.activationDeadline = nil
                             opened.hide()
                         }
+                        (NSApp.delegate as? AppDelegate)?.restoreBackgroundModeIfNeeded()
                     }
                 }
-            } else { _ = app.activate(options: [.activateIgnoringOtherApps]) }
+            } else {
+                _ = app.activate(options: [.activateIgnoringOtherApps])
+                (NSApp.delegate as? AppDelegate)?.restoreBackgroundModeIfNeeded()
+            }
         }
     }
 
@@ -360,6 +376,7 @@ final class AppLockManager: ObservableObject {
         activationDeadline = nil
         session.revoke()
         dismissShield()
+        (NSApp.delegate as? AppDelegate)?.restoreBackgroundModeIfNeeded()
     }
 
     // MARK: Window lifecycle (Dock reopen can use the same PID without a new activation)
@@ -449,7 +466,9 @@ final class AppLockManager: ObservableObject {
         dismissShield()
         for screen in NSScreen.screens {
             let panel = AppLockPanel(contentRect: screen.frame, styleMask: [.borderless], backing: .buffered, defer: false)
-            panel.level = .normal
+            panel.level = .floating
+            panel.hidesOnDeactivate = false
+            panel.isFloatingPanel = true
             panel.backgroundColor = .windowBackgroundColor
             panel.isOpaque = true
             panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
@@ -469,6 +488,17 @@ final class AppLockManager: ObservableObject {
             panel.makeKeyAndOrderFront(nil)
             shieldWindows.append(panel)
         }
+        bringLockToFront()
+    }
+
+    private func bringLockToFront() {
+        guard !shieldWindows.isEmpty else { return }
+        NSApp.setActivationPolicy(.regular)
+        NSApp.unhide(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        for panel in shieldWindows { panel.orderFrontRegardless() }
+        shieldWindows.first?.makeKeyAndOrderFront(nil)
+        logger.notice("Lock screen raised dashboard-independent=true")
     }
 
     private func dismissShield() {
