@@ -1,6 +1,42 @@
-# AppLocker for macOS 13+
+# AppLocker for macOS
 
-AppLocker automatically opens native Touch ID or Mac password authentication on each protected-app visit. No initial Unlock click is required. Cancelling or failing authentication keeps the app locked with a button for an explicit retry. Existing protected-app settings are preserved.
+Automatically ask for Touch ID or your Mac password when you open a protected app. No initial Unlock click is required. Closing the dashboard keeps the menu bar guard running.
+
+## Download
+
+### [Download AppLocker for Apple Silicon](https://github.com/mathely27/macapplock/releases/latest/download/AppLocker-macOS-AppleSilicon.zip)
+
+**Requires an Apple Silicon (M-series) Mac running macOS 13 or later.** This prebuilt download does not support Intel Macs or Windows. Xcode, Python, and Homebrew are not needed to use it.
+
+The ZIP contains:
+
+- `AppLocker.app` — the ready-to-run app.
+- `EnableBackground.command` — sets up automatic background protection for your Mac account.
+- `START_HERE.md` — the installation instructions below.
+
+[All releases and checksums](https://github.com/mathely27/macapplock/releases/latest)
+
+## Install and set up
+
+1. Download the ZIP above and extract it.
+2. Move **AppLocker.app** into **Applications**. Keep it there; run this installed copy rather than the copy in Downloads.
+3. Open AppLocker normally. This is a locally signed, unnotarized build. If macOS blocks the first launch, review the download source and follow [Apple's instructions for opening a trusted app](https://support.apple.com/en-us/102445). The setup script does not disable Gatekeeper or remove quarantine protections.
+4. In **System Settings → Privacy & Security → Accessibility**, enable the installed AppLocker. If it is missing, click **+** and choose `/Applications/AppLocker.app`.
+5. In AppLocker, click **+** and select the apps you want to protect. Opening a protected app now starts native Touch ID or Mac password authentication automatically.
+6. Double-click **EnableBackground.command** from the extracted folder. It opens Terminal and installs only AppLocker's per-user login agent. No administrator password is required by the script.
+7. **Sign out and back in once** to activate the supervised background service. If macOS asks, allow AppLocker under **General → Login Items**. Until that login, the normally opened app continues monitoring when its dashboard is closed, but its process is not yet supervised for automatic restart.
+
+After setup, use the menu bar shield → **Open AppLocker** to manage protection. Each Mac uses its own user's Touch ID or Mac password. The download does not include the developer's protected-app list or credentials.
+
+### Already have the app?
+
+Download the same ZIP and use its included `EnableBackground.command` ([view the setup script](Service/EnableBackground.command)). Run it only after placing AppLocker in Applications and opening that copy once. Sign out/in once after setup. The script preserves existing app settings and does not terminate running applications.
+
+### Permission or startup trouble
+
+- **Grant Access still appears after an update:** locally signed builds have different signatures. Remove only the stale AppLocker entry from Accessibility, then add `/Applications/AppLocker.app` again and allow it. Approve the macOS authorization prompt yourself.
+- **Background protection does not start:** make sure the app remains in Applications, run `EnableBackground.command`, and sign out/in once. Check **General → Login Items** for an approval request.
+- **Native authentication was cancelled:** the app remains locked with a retry button. No protected app is force-quit.
 
 ## Background protection
 
