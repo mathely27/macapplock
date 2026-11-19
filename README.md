@@ -1,43 +1,41 @@
-# AppLocker for macOS 🔐
+# AppLocker for macOS
 
-AppLocker is a lightweight, native macOS utility that allows you to protect your applications using Touch ID or your Mac's administrator password.
+Native menu bar app that asks for Touch ID or the current Mac user's password when you enter a protected app. Requires macOS 13 or later.
 
-## 🌟 Features
-- **Native Security:** Leverages macOS `LocalAuthentication` to use Touch ID and standard Mac passwords.
-- **Immediate Protection:** Terminates protected applications instantly upon launch until authenticated.
-- **Launch at Login:** Option to run silently in the background automatically when you start your Mac.
-- **Clean Architecture:** Built using SwiftUI and follows a clean MVVM folder architecture.
-- **Lightweight UI:** Native gray/black styling utilizing standard macOS components (`List`, `Form`, `Toggle`).
+## Build and run
 
-## 📁 Architecture
-The project is strictly organized using the following folder architecture:
-- `AppLocker/Models` - Contains the `ProtectedApp` data model.
-- `AppLocker/Managers` - Core logic (`AppLockManager`) for app lifecycle monitoring, persistence, and LocalAuthentication.
-- `AppLocker/Views` - SwiftUI views for the dashboard, app lists, and adding apps.
-- `AppLocker/App` - The application entry point and AppDelegate.
+1. Open `AppLocker.xcodeproj` in Xcode and use **Sign to Run Locally** (or your development team).
+2. Build and run the AppLocker scheme.
+3. Grant **System Settings → Privacy & Security → Accessibility** to this exact copy of AppLocker. Protected apps remain locked until this permission is granted. Window close/reopen detection requires it.
+4. Add WhatsApp or another app using **+**.
+5. Turn on **Launch at Login** for protection after signing in. If macOS requests approval, enable AppLocker under **General → Login Items**. Keep the app in a stable location before enabling this setting.
 
-## 🚀 How to Run Locally
+Closing AppLocker's dashboard leaves protection running in the menu bar. Quitting AppLocker, removing an app, disabling protection, and disabling login protection require authentication when applicable. Settings failures are shown in the dashboard.
 
-### Requirements
-- macOS 13.0 or later
-- Xcode 14.0 or later
+## Lock behavior
 
-### Setup
-1. Clone the repository.
-2. Open `AppLocker.xcodeproj` in Xcode.
-3. Select the `AppLocker` target.
-4. Go to **Signing & Capabilities** and select your Team (or choose "Sign to Run Locally").
-5. Press `Cmd + R` to build and run.
+- Each foreground visit shows an explicit lock screen. Click **Unlock with Touch ID or Mac Password** (or press Return) to start fresh native authentication. Switching away, hiding the app, closing/minimizing its last window, quitting, sleep, and screen lock revoke the unlock.
+- Closing and reopening WhatsApp uses the same process on macOS. Accessibility window notifications handle this directly; a 250 ms reconciliation timer and WindowServer window IDs back up workspace events. An empty accessibility window list cannot bypass a visible protected app.
+- Cancel on the lock screen hides the protected app. Canceling the native authentication keeps the lock screen visible so you can retry.
+- Prompts are serialized. A second protected app opened during a prompt stays hidden and locked.
+- Existing processes are hidden behind an opaque shield during authentication. Apps are not force-quit or relaunched, preserving unsaved work and background activity.
+- Unlocks are bound to process identity and a unique request. Late callbacks cannot unlock a replacement process or a session invalidated by sleep/termination. Fresh `LAContext` instances use no Touch ID reuse interval.
 
-*Note: The app requires "Accessibility" permissions to monitor the launch of other applications effectively. You will be prompted to allow this on first launch.*
+This is a user-session privacy utility. macOS delivers app/window notifications after events; AppLocker cannot guarantee that content never appears briefly. Accessibility permission is needed for reliable same-process window reopen detection. It must remain running; Force Quit, a crash, or an administrator can stop protection. Hidden apps continue background processing, notifications, and network activity. This is not an OS security boundary.
 
-## 💻 Usage
-1. Open **AppLocker**.
-2. Click **Add App** and select the applications you want to protect (e.g., WhatsApp, Mail, Photos).
-3. Toggle the **Launch at Login** switch to enable background protection automatically.
-4. Close the AppLocker window; it will continue running seamlessly in the background.
+## Verification
 
-Whenever you open a protected app, AppLocker will intercept it and present a native Touch ID/Password prompt!
+Run `swift test` (with Xcode selected, or `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`). Core regression tests cover window detection fallback, explicit open intent, and rapid same-process reopen, duplicate events, cancellation/retry, stale callbacks, PID reuse, and process-bound authorization.
 
-## 📜 License
-MIT License. Feel free to fork and improve!
+Manual checks on the signed running app:
+
+- Unlock WhatsApp, switch to Finder, then return immediately: fresh prompt.
+- Close its last window with the red button, reopen from Dock within 2–3 seconds: fresh prompt.
+- Minimize its last window and restore it: fresh prompt.
+- Cancel and reopen: fresh prompt, with no killed process.
+- Quit/relaunch WhatsApp: fresh prompt.
+- Close AppLocker's dashboard and repeat: monitoring continues.
+- Open two protected apps during authentication: neither receives an unrelated unlock.
+- Sleep/wake or lock/unlock the Mac: previous authorization is revoked.
+- Disable/remove protection or quit AppLocker: authentication is required.
+- Enable Launch at Login, sign out/in, verify the menu bar icon and prompt.

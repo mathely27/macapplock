@@ -11,6 +11,9 @@
 		B002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A002 /* ContentView.swift */; };
 		B003 /* AppLockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A003 /* AppLockManager.swift */; };
 		B006 /* ProtectedApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A006 /* ProtectedApp.swift */; };
+		B007 = {isa = PBXBuildFile; fileRef = A007; };
+		B008 = {isa = PBXBuildFile; fileRef = A008; };
+		B009 = {isa = PBXBuildFile; fileRef = A009; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +24,9 @@
 		A005 /* AppLocker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppLocker.entitlements; sourceTree = "<group>"; };
 		A006 /* ProtectedApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/ProtectedApp.swift; sourceTree = "<group>"; };
 		PROD /* AppLocker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppLocker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A007 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/LockSession.swift; sourceTree = "<group>"; };
+		A008 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A009 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/WindowVisibility.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +57,9 @@
 				A004 /* Info.plist */,
 				A005 /* AppLocker.entitlements */,
 				A006 /* ProtectedApp.swift */,
+				A007,
+				A009,
+				A008,
 			);
 			path = AppLocker;
 			sourceTree = "<group>";
@@ -121,6 +130,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B008,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -135,6 +145,8 @@
 				B002 /* ContentView.swift in Sources */,
 				B003 /* AppLockManager.swift in Sources */,
 				B006 /* ProtectedApp.swift in Sources */,
+				B007,
+				B009,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -262,7 +274,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = AppLocker/AppLocker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -289,7 +300,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = AppLocker/AppLocker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
