@@ -4,39 +4,41 @@ Automatically ask for Touch ID or your Mac password when you open a protected ap
 
 ## Download
 
-### [Download AppLocker for Apple Silicon](https://github.com/mathely27/macapplock/releases/latest/download/AppLocker-macOS-AppleSilicon.zip)
+### [Download AppLocker 1.2 — Universal DMG](https://github.com/mathely27/macapplock/releases/latest/download/AppLocker-Universal.dmg)
 
-**Requires an Apple Silicon (M-series) Mac running macOS 13 or later.** This prebuilt download does not support Intel Macs or Windows. Xcode, Python, and Homebrew are not needed to use it.
+**Intel and Apple Silicon (M-series), macOS 13 or later.** One universal app includes native `x86_64` and `arm64` code. Xcode, Python, and Homebrew are not needed to use it. Macs running macOS 12 or earlier are not supported.
 
-The ZIP contains:
+The disk image includes the app with its new icon embedded, an Applications shortcut, and a **Setup & Help** folder containing background setup and troubleshooting.
 
-- `AppLocker.app` — the ready-to-run app.
-- `EnableBackground.command` — sets up automatic background protection for your Mac account.
-- `START_HERE.md` — the installation instructions below.
+**Signing status:** this is a locally signed, unnotarized build. A DMG is an installation container and does not grant Apple trust. First-open approval may still be required. See [Apple's guide](https://support.apple.com/en-us/102445). Seamless Gatekeeper approval requires a Developer ID certificate and Apple notarization; these are not present in this release.
 
-[All releases and checksums](https://github.com/mathely27/macapplock/releases/latest)
+[Release notes and SHA-256 checksum](https://github.com/mathely27/macapplock/releases/latest)
 
-## Install and set up
+## Install
 
-1. Download the ZIP above and extract it.
-2. Move **AppLocker.app** into **Applications**. Keep it there; run this installed copy rather than the copy in Downloads.
-3. Open AppLocker normally. This is a locally signed, unnotarized build. If macOS blocks the first launch, review the download source and follow [Apple's instructions for opening a trusted app](https://support.apple.com/en-us/102445). The setup script does not disable Gatekeeper or remove quarantine protections.
-4. In **System Settings → Privacy & Security → Accessibility**, enable the installed AppLocker. If it is missing, click **+** and choose `/Applications/AppLocker.app`.
-5. In AppLocker, click **+** and select the apps you want to protect. Opening a protected app now starts native Touch ID or Mac password authentication automatically.
-6. Double-click **EnableBackground.command** from the extracted folder. It opens Terminal and installs only AppLocker's per-user login agent. No administrator password is required by the script.
-7. **Sign out and back in once** to activate the supervised background service. If macOS asks, allow AppLocker under **General → Login Items**. Until that login, the normally opened app continues monitoring when its dashboard is closed, but its process is not yet supervised for automatic restart.
+1. Download and open **AppLocker-Universal.dmg**.
+2. Drag **AppLocker** onto the **Applications** shortcut. If an old AppLocker process is stuck, stop that process in Activity Monitor before replacing its app. Do not delete your preferences.
+3. Eject the disk image and open **AppLocker from Applications**. Run this installed copy rather than the copy inside the DMG or Downloads. Review the source and follow Apple's first-open approval instructions if macOS blocks it.
+4. Enable the installed app in **System Settings → Privacy & Security → Accessibility**. If needed, click **+** and choose `/Applications/AppLocker.app`.
+5. Click **+** in AppLocker to choose apps to protect. Their native Touch ID/Mac password prompt opens automatically.
+6. To set up automatic startup and restart, run **Setup & Help → EnableBackground.command** from the disk image (or copy the folder before ejecting). It installs only the current user's login agent; it does not stop apps, change Accessibility, or bypass Gatekeeper.
+7. **Sign out and back in once** to activate the supervised guard. Allow AppLocker under **General → Login Items** if macOS requests it. Until that login, the normally opened app keeps monitoring when its dashboard closes, but automatic process restart is not yet supervised.
 
-After setup, use the menu bar shield → **Open AppLocker** to manage protection. Each Mac uses its own user's Touch ID or Mac password. The download does not include the developer's protected-app list or credentials.
+Use the menu bar shield → **Open AppLocker** to manage protection. Each Mac uses its own user's Touch ID/Mac password. The download contains no protected-app list or credentials from the developer.
 
-### Already have the app?
+## Upgrading from the old ZIP
 
-Download the same ZIP and use its included `EnableBackground.command` ([view the setup script](Service/EnableBackground.command)). Run it only after placing AppLocker in Applications and opening that copy once. Sign out/in once after setup. The script preserves existing app settings and does not terminate running applications.
+- Download the new universal DMG above. The old release was Apple Silicon only and its icon depended on Finder custom-icon metadata.
+- Stop a stuck old AppLocker process using Activity Monitor, replace the app in Applications, and open the installed copy. Avoid multiple running copies.
+- If the icon remains stale, remove the old Dock shortcut and drag the installed app back to the Dock. The 1.2 icon is compiled inside the app itself.
+- If **Grant Access** remains after an update, remove only the stale AppLocker Accessibility entry and add the new installed copy again. Approve the normal macOS authorization prompt yourself.
+- If it still reports **not responding**, report the exact macOS version, chip, and error text in [an issue](https://github.com/mathely27/macapplock/issues). A screenshot alone cannot establish the cause.
 
-### Permission or startup trouble
+## Verification scope
 
-- **Grant Access still appears after an update:** locally signed builds have different signatures. Remove only the stale AppLocker entry from Accessibility, then add `/Applications/AppLocker.app` again and allow it. Approve the macOS authorization prompt yourself.
-- **Background protection does not start:** make sure the app remains in Applications, run `EnableBackground.command`, and sign out/in once. Check **General → Login Items** for an approval request.
-- **Native authentication was cancelled:** the app remains locked with a retry button. No protected app is force-quit.
+The universal binary, embedded icon, clean strict code signature, DMG checksum, and copy-out from the mounted image were verified locally. Fresh-profile Apple Silicon startup and the Intel slice running under Rosetta both opened the dashboard; the Intel test also used a seeded protected-app list with no Accessibility permission. All 11 core regression tests passed.
+
+Physical Intel hardware and each supported older macOS version have not been tested. This release also defers monitoring until after singleton initialization to avoid a re-entrant startup deadlock when permission handling opens the dashboard.
 
 ## Background protection
 

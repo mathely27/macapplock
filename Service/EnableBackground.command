@@ -18,7 +18,6 @@ fail() {
     exit 1
 }
 
-[[ "$(/usr/bin/uname -m)" == 'arm64' ]] || fail 'This download requires an Apple Silicon (M-series) Mac.'
 os_version="$(/usr/bin/sw_vers -productVersion)"
 [[ "${os_version%%.*}" -ge 13 ]] || fail 'AppLocker requires macOS 13 or later.'
 [[ -x "$app_path/Contents/MacOS/AppLocker" ]] || fail 'First move AppLocker.app into Applications and open it once, then run this setup again.'

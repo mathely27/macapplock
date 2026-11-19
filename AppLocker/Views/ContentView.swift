@@ -137,9 +137,6 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 500, minHeight: 400)
-        .onAppear {
-            manager.checkAccessibilityPermission()
-        }
         .alert("AppLocker", isPresented: Binding(
             get: { manager.statusMessage != nil },
             set: { if !$0 { manager.statusMessage = nil } }
