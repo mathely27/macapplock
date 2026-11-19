@@ -251,7 +251,10 @@ final class AppLockManager: ObservableObject {
         // A pending prompt never gives any other app a free pass.
         if let pending = pendingApp {
             app.hide()
-            if identity(pending) == process || authenticationID != nil {
+            // Native authentication owns focus while it is running. Repeated
+            // workspace events must not raise our shield over its Touch ID dialog.
+            if authenticationID != nil { return }
+            if identity(pending) == process {
                 bringLockToFront()
                 return
             }
@@ -282,10 +285,21 @@ final class AppLockManager: ObservableObject {
         }, cancel: { [weak self] in
             self?.cancelPendingAuthentication()
         })
+        // Start once, after AppKit has presented the lock and activated the guard.
+        // Cancellation/failure leaves the button available for an explicit retry.
+        DispatchQueue.main.async { [weak self, weak app] in
+            guard let self, let app,
+                  self.isMonitoring, self.sessionIsActive,
+                  !app.isTerminated, self.isProtected(app),
+                  self.session.requestID == request,
+                  self.pendingApp.map({ self.identity($0) }) == process else { return }
+            self.unlock(app, request: request, process: process)
+        }
     }
 
     private func unlock(_ app: NSRunningApplication, request: UUID, process: ProcessIdentity) {
-        guard authenticationID == nil else { return }
+        guard authenticationID == nil, session.requestID == request,
+              pendingApp.map({ identity($0) }) == process else { return }
         logger.notice("Starting authentication for \(app.bundleIdentifier ?? "unknown", privacy: .public)")
         authenticate(reason: "Unlock \(app.localizedName ?? "protected app")") { [weak self, weak app] success in
             guard let self, let app, self.session.requestID == request else { return }

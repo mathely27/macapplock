@@ -1,6 +1,6 @@
 # AppLocker for macOS 13+
 
-AppLocker asks for fresh Touch ID or the Mac user's password on each protected-app visit. Existing protected-app settings are preserved.
+AppLocker automatically opens native Touch ID or Mac password authentication on each protected-app visit. No initial Unlock click is required. Cancelling or failing authentication keeps the app locked with a button for an explicit retry. Existing protected-app settings are preserved.
 
 ## Background protection
 
