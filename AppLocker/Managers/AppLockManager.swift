@@ -2,7 +2,6 @@ import AppKit
 import ApplicationServices
 import Combine
 import LocalAuthentication
-import ServiceManagement
 import SwiftUI
 import os
 
@@ -13,7 +12,6 @@ final class AppLockManager: ObservableObject {
     @Published private(set) var protectedApps: [ProtectedApp] = []
     @Published private(set) var isMonitoring = false
     @Published private(set) var hasAccessibilityPermission = false
-    @Published private(set) var launchAtLogin = false
     @Published var statusMessage: String?
 
     private let appsKey = "ProtectedApps"
@@ -42,7 +40,7 @@ final class AppLockManager: ObservableObject {
                 $0.bundleIdentifier != Bundle.main.bundleIdentifier && seen.insert($0.bundleIdentifier).inserted
             }
         }
-        refreshPermissionsAndLogin()
+        checkAccessibilityPermission()
         startMonitoring()
     }
 
@@ -99,31 +97,6 @@ final class AppLockManager: ObservableObject {
         }
         if app.isEnabled { authenticate(reason: "Disable protection for \(app.name)", completion: change) }
         else { change(true) }
-    }
-
-    func setLaunchAtLogin(_ enabled: Bool) {
-        if !enabled && hasActiveProtection {
-            authenticate(reason: "Stop AppLocker from protecting apps automatically at login") { [weak self] success in
-                if success { self?.updateLogin(enabled) }
-            }
-        } else { updateLogin(enabled) }
-    }
-
-    private func updateLogin(_ enabled: Bool) {
-        do {
-            if enabled { try SMAppService.mainApp.register() }
-            else { try SMAppService.mainApp.unregister() }
-        } catch { statusMessage = "Could not update Launch at Login: \(error.localizedDescription)" }
-        refreshPermissionsAndLogin()
-        if enabled && SMAppService.mainApp.status == .requiresApproval {
-            statusMessage = "Allow AppLocker in System Settings → General → Login Items."
-            SMAppService.openSystemSettingsLoginItems()
-        }
-    }
-
-    private func refreshPermissionsAndLogin() {
-        checkAccessibilityPermission()
-        launchAtLogin = SMAppService.mainApp.status == .enabled
     }
 
     var hasActiveProtection: Bool { protectedApps.contains { $0.isEnabled } }
@@ -282,6 +255,7 @@ final class AppLockManager: ObservableObject {
             app.hide()
             NSApp.activate(ignoringOtherApps: true)
             statusMessage = "Enable AppLocker in System Settings → Privacy & Security → Accessibility before unlocking protected apps."
+            (NSApp.delegate as? AppDelegate)?.showMainWindow()
             return
         }
         guard let request = session.begin(process) else { return }

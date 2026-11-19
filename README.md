@@ -1,41 +1,32 @@
-# AppLocker for macOS
+# AppLocker for macOS 13+
 
-Native menu bar app that asks for Touch ID or the current Mac user's password when you enter a protected app. Requires macOS 13 or later.
+AppLocker asks for fresh Touch ID or the Mac user's password on each protected-app visit. Existing protected-app settings are preserved.
 
-## Build and run
+## Background protection
 
-1. Open `AppLocker.xcodeproj` in Xcode and use **Sign to Run Locally** (or your development team).
-2. Build and run the AppLocker scheme.
-3. Grant **System Settings → Privacy & Security → Accessibility** to this exact copy of AppLocker. Protected apps remain locked until this permission is granted. Window close/reopen detection requires it.
-4. Add WhatsApp or another app using **+**.
-5. Turn on **Launch at Login** for protection after signing in. If macOS requests approval, enable AppLocker under **General → Login Items**. Keep the app in a stable location before enabling this setting.
+Closing the dashboard, Cmd+Q, and Dock Quit dismiss the dashboard and remove the Dock icon. The menu bar guard continues monitoring all enabled protected apps and can display lock and authentication panels independently of the dashboard.
 
-Closing AppLocker's dashboard leaves protection running in the menu bar. Quitting AppLocker, removing an app, disabling protection, and disabling login protection require authentication when applicable. Settings failures are shown in the dashboard.
+The installed per-user launchd service `com.applock.AppLocker.guard` runs `/Applications/AppLocker.app/Contents/MacOS/AppLocker --background`, starts at login, and restarts the guard after an unexpected process exit. Background startup creates no dashboard. The service plist lives at `~/Library/LaunchAgents/com.applock.AppLocker.guard.plist`. Keep the installed app in `/Applications`.
 
-## Lock behavior
+Use the menu bar's **Open AppLocker** to manage protected apps. **Stop Protection Until Login…** requires native authentication and unloads the service for the current login session. Its installed plist restores protection at the next login. Shut down, restart, and logout are allowed normally. An administrator can still disable or uninstall the service; this is a user-session privacy utility, not an OS security boundary. Restarting after a crash has a short interruption.
 
-- Each foreground visit shows an explicit lock screen. Click **Unlock with Touch ID or Mac Password** (or press Return) to start fresh native authentication. Switching away, hiding the app, closing/minimizing its last window, quitting, sleep, and screen lock revoke the unlock.
-- Closing and reopening WhatsApp uses the same process on macOS. Accessibility window notifications handle this directly; a 250 ms reconciliation timer and WindowServer window IDs back up workspace events. An empty accessibility window list cannot bypass a visible protected app.
-- Cancel on the lock screen hides the protected app. Canceling the native authentication keeps the lock screen visible so you can retry.
-- Prompts are serialized. A second protected app opened during a prompt stays hidden and locked.
-- Existing processes are hidden behind an opaque shield during authentication. Apps are not force-quit or relaunched, preserving unsaved work and background activity.
-- Unlocks are bound to process identity and a unique request. Late callbacks cannot unlock a replacement process or a session invalidated by sleep/termination. Fresh `LAContext` instances use no Touch ID reuse interval.
+Accessibility permission must be enabled for this installed copy in System Settings → Privacy & Security → Accessibility. A changed local code signature can require re-enabling that existing permission after an update. Without it, protected apps stay hidden and the dashboard explains the setup requirement.
 
-This is a user-session privacy utility. macOS delivers app/window notifications after events; AppLocker cannot guarantee that content never appears briefly. Accessibility permission is needed for reliable same-process window reopen detection. It must remain running; Force Quit, a crash, or an administrator can stop protection. Hidden apps continue background processing, notifications, and network activity. This is not an OS security boundary.
+## Build and verify
 
-## Verification
+Build the AppLocker scheme with Xcode, using Sign to Run Locally. Run core tests with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test`.
 
-Run `swift test` (with Xcode selected, or `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`). Core regression tests cover window detection fallback, explicit open intent, and rapid same-process reopen, duplicate events, cancellation/retry, stale callbacks, PID reuse, and process-bound authorization.
+The guard preserves the existing window-lifecycle behavior: switching away, hiding, closing/minimizing the last window, sleep, screen lock, and process termination revoke authorization. Cancellation keeps apps locked without killing their processes or losing unsaved work. Lock panels serialize authentication requests, and stale callbacks cannot unlock another process.
 
-Manual checks on the signed running app:
+Verify on the installed app:
 
-- Unlock WhatsApp, switch to Finder, then return immediately: fresh prompt.
-- Close its last window with the red button, reopen from Dock within 2–3 seconds: fresh prompt.
-- Minimize its last window and restore it: fresh prompt.
-- Cancel and reopen: fresh prompt, with no killed process.
-- Quit/relaunch WhatsApp: fresh prompt.
-- Close AppLocker's dashboard and repeat: monitoring continues.
-- Open two protected apps during authentication: neither receives an unrelated unlock.
-- Sleep/wake or lock/unlock the Mac: previous authorization is revoked.
-- Disable/remove protection or quit AppLocker: authentication is required.
-- Enable Launch at Login, sign out/in, verify the menu bar icon and prompt.
+- Start with no dashboard: protected apps still display their lock panels.
+- Close the dashboard with its red button, reopen it, then Cmd+Q: background monitoring remains active in both cases.
+- Terminate the guard process: launchd starts a fresh guard with no saved authorization.
+- Visit each configured protected app after closing the dashboard: each requires authentication.
+- Cancel authentication and retry: the lock panel stays usable.
+- Sign out/in: the service starts automatically, without opening the dashboard.
+
+macOS reports app/window changes after they happen, so a brief content flash cannot be ruled out. Hidden apps retain their normal background activity and notifications.
+
+launchd design reference: https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html

@@ -72,7 +72,7 @@ struct ContentView: View {
 
                 Divider()
 
-                Text("Locks again when you switch away, hide, close, or minimize the last window.")
+                Text("Protection stays on when AppLocker is closed. Apps lock again when you leave or close them.")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(8)
@@ -120,9 +120,8 @@ struct ContentView: View {
             .navigationTitle("AppLocker")
             .toolbar {
                 ToolbarItem(placement: .automatic) {
-                    Toggle("Launch at Login", isOn: Binding(get: { manager.launchAtLogin }, set: { manager.setLaunchAtLogin($0) }))
-                        .toggleStyle(.switch)
-                        .help("Start AppLocker automatically when you log in")
+                    Label("Background Protection", systemImage: "lock.shield.fill")
+                        .help("Closing AppLocker keeps protection running. The installed background service starts at login and restarts after an unexpected exit.")
                 }
 
                 ToolbarItem(placement: .primaryAction) {
