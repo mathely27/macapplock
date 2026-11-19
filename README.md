@@ -10,7 +10,7 @@ The installed per-user launchd service `com.applock.AppLocker.guard` runs `/Appl
 
 Use the menu bar's **Open AppLocker** to manage protected apps. **Stop Protection Until Login…** requires native authentication and unloads the service for the current login session. Its installed plist restores protection at the next login. Shut down, restart, and logout are allowed normally. An administrator can still disable or uninstall the service; this is a user-session privacy utility, not an OS security boundary. Restarting after a crash has a short interruption.
 
-Accessibility permission must be enabled for this installed copy in System Settings → Privacy & Security → Accessibility. A changed local code signature can require re-enabling that existing permission after an update. Without it, protected apps stay hidden and the dashboard explains the setup requirement.
+Accessibility permission must be enabled for this installed copy in System Settings → Privacy & Security → Accessibility. After a locally signed update, macOS may keep an enabled entry bound to the old binary signature. In that case remove only the AppLocker entry, then use + to add `/Applications/AppLocker.app` again. Merely toggling the old entry may retain its obsolete code requirement. Approve the normal macOS authorization prompt when requested. Without it, protected apps stay hidden and the dashboard explains the setup requirement.
 
 ## Build and verify
 
