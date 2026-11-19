@@ -40,8 +40,10 @@ final class AppLockManager: ObservableObject {
                 $0.bundleIdentifier != Bundle.main.bundleIdentifier && seen.insert($0.bundleIdentifier).inserted
             }
         }
-        checkAccessibilityPermission()
-        startMonitoring()
+        // Never enter workspace/TCC callbacks inside static singleton creation.
+        // Missing permission can request a dashboard, whose ContentView accesses
+        // shared again. Defer until initialization and app launch have completed.
+        DispatchQueue.main.async { [weak self] in self?.startMonitoring() }
     }
 
     var isPresentingLock: Bool { pendingApp != nil }

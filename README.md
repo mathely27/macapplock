@@ -1,6 +1,44 @@
-# AppLocker for macOS 13+
+# AppLocker for macOS
 
-AppLocker automatically opens native Touch ID or Mac password authentication on each protected-app visit. No initial Unlock click is required. Cancelling or failing authentication keeps the app locked with a button for an explicit retry. Existing protected-app settings are preserved.
+Automatically ask for Touch ID or your Mac password when you open a protected app. No initial Unlock click is required. Closing the dashboard keeps the menu bar guard running.
+
+## Download
+
+### [Download AppLocker 1.2 — Universal DMG](https://github.com/mathely27/macapplock/releases/latest/download/AppLocker-Universal.dmg)
+
+**Intel and Apple Silicon (M-series), macOS 13 or later.** One universal app includes native `x86_64` and `arm64` code. Xcode, Python, and Homebrew are not needed to use it. Macs running macOS 12 or earlier are not supported.
+
+The disk image includes the app with its new icon embedded, an Applications shortcut, and a **Setup & Help** folder containing background setup and troubleshooting.
+
+**Signing status:** this is a locally signed, unnotarized build. A DMG is an installation container and does not grant Apple trust. First-open approval may still be required. See [Apple's guide](https://support.apple.com/en-us/102445). Seamless Gatekeeper approval requires a Developer ID certificate and Apple notarization; these are not present in this release.
+
+[Release notes and SHA-256 checksum](https://github.com/mathely27/macapplock/releases/latest)
+
+## Install
+
+1. Download and open **AppLocker-Universal.dmg**.
+2. Drag **AppLocker** onto the **Applications** shortcut. If an old AppLocker process is stuck, stop that process in Activity Monitor before replacing its app. Do not delete your preferences.
+3. Eject the disk image and open **AppLocker from Applications**. Run this installed copy rather than the copy inside the DMG or Downloads. Review the source and follow Apple's first-open approval instructions if macOS blocks it.
+4. Enable the installed app in **System Settings → Privacy & Security → Accessibility**. If needed, click **+** and choose `/Applications/AppLocker.app`.
+5. Click **+** in AppLocker to choose apps to protect. Their native Touch ID/Mac password prompt opens automatically.
+6. To set up automatic startup and restart, run **Setup & Help → EnableBackground.command** from the disk image (or copy the folder before ejecting). It installs only the current user's login agent; it does not stop apps, change Accessibility, or bypass Gatekeeper.
+7. **Sign out and back in once** to activate the supervised guard. Allow AppLocker under **General → Login Items** if macOS requests it. Until that login, the normally opened app keeps monitoring when its dashboard closes, but automatic process restart is not yet supervised.
+
+Use the menu bar shield → **Open AppLocker** to manage protection. Each Mac uses its own user's Touch ID/Mac password. The download contains no protected-app list or credentials from the developer.
+
+## Upgrading from the old ZIP
+
+- Download the new universal DMG above. The old release was Apple Silicon only and its icon depended on Finder custom-icon metadata.
+- Stop a stuck old AppLocker process using Activity Monitor, replace the app in Applications, and open the installed copy. Avoid multiple running copies.
+- If the icon remains stale, remove the old Dock shortcut and drag the installed app back to the Dock. The 1.2 icon is compiled inside the app itself.
+- If **Grant Access** remains after an update, remove only the stale AppLocker Accessibility entry and add the new installed copy again. Approve the normal macOS authorization prompt yourself.
+- If it still reports **not responding**, report the exact macOS version, chip, and error text in [an issue](https://github.com/mathely27/macapplock/issues). A screenshot alone cannot establish the cause.
+
+## Verification scope
+
+The universal binary, embedded icon, clean strict code signature, DMG checksum, and copy-out from the mounted image were verified locally. Fresh-profile Apple Silicon startup and the Intel slice running under Rosetta both opened the dashboard; the Intel test also used a seeded protected-app list with no Accessibility permission. All 11 core regression tests passed.
+
+Physical Intel hardware and each supported older macOS version have not been tested. This release also defers monitoring until after singleton initialization to avoid a re-entrant startup deadlock when permission handling opens the dashboard.
 
 ## Background protection
 
